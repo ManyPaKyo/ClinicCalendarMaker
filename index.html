@@ -136,8 +136,8 @@
         .day-header {
             text-align: center;
             font-weight: 600;
-            color: #fff;
-            background-color: #1e3a63;
+            color: #000000;
+            background-color: #fdf4dc;
             padding: 8px;
             border-radius: 6px;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
@@ -212,7 +212,7 @@
             background-color: #f8fafc;
             font-weight: 600;
             /* ========================================= */
-            font-size: 22px; /* ✏️ แก้ขนาดเวลา (17.00 - 19.00 น.) ตรงนี้ */
+            font-size: 20px; /* ✏️ แก้ขนาดเวลา (17.00 - 19.00 น.) ตรงนี้ */
             /* ========================================= */
         }
 
@@ -367,12 +367,12 @@
                 <div class="date-number">${day}</div>
                 
                 <select class="status-select" onchange="handleStatusChange(this)">
-                    <option value="open">🟢 เปิดทำการ</option>
-                    <option value="closed">🔴 ปิดทำการ</option>
+                    <option value="open">เปิด</option>
+                    <option value="closed">ปิด</option>
                 </select>
 
                 <div class="time-container">
-                    <input type="text" list="timeOptions" class="time-input" value="17.00 - 19.00 น." placeholder="ระบุเวลา">
+                    <input type="text" list="timeOptions" class="time-input" placeholder="ระบุเวลา">
                 </div>
             `;
             grid.appendChild(cell);
