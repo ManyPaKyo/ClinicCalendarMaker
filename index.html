@@ -61,7 +61,7 @@
             margin: 0;
             font-weight: 600;
             /* ========================================= */
-            font-size: 40px; /* ✏️ แก้ขนาดชื่อคลินิก ตรงนี้ */
+            font-size: 30px; /* ✏️ แก้ขนาดชื่อคลินิก ตรงนี้ */
             /* ========================================= */
         }
 
@@ -176,7 +176,7 @@
             color: #1e3a63;
             line-height: 1;
             /* ========================================= */
-            font-size: 32px; /* ✏️ แก้ขนาดตัวเลขวันที่ (1, 2, 3...) ตรงนี้ */
+            font-size: 30px; /* ✏️ แก้ขนาดตัวเลขวันที่ (1, 2, 3...) ตรงนี้ */
             /* ========================================= */
         }
 
@@ -192,7 +192,7 @@
             cursor: pointer;
             text-align: center;
             /* ========================================= */
-            font-size: 32px; /* ✏️ แก้ขนาดคำว่า "เปิดทำการ/ปิดทำการ" ตรงนี้ */
+            font-size: 30px; /* ✏️ แก้ขนาดคำว่า "เปิดทำการ/ปิดทำการ" ตรงนี้ */
             /* ========================================= */
         }
         
@@ -212,7 +212,7 @@
             background-color: #f8fafc;
             font-weight: 600;
             /* ========================================= */
-            font-size: 24px; /* ✏️ แก้ขนาดเวลา (17.00 - 19.00 น.) ตรงนี้ */
+            font-size: 22px; /* ✏️ แก้ขนาดเวลา (17.00 - 19.00 น.) ตรงนี้ */
             /* ========================================= */
         }
 
@@ -268,7 +268,7 @@
         </div>
         
         <div class="header-title">
-            <h1>คลินิกเฉพาะทาง หู คอ จมูก</h1>
+            <h1>แพทย์ณฐวุฒิ คลินิกเฉพาะทาง หู คอ จมูก</h1>
             <h2 id="calendarTitle">ประจำเดือน...</h2>
         </div>
 
@@ -288,8 +288,8 @@
 
     <!-- รายการเวลาให้เลือก (Datalist สำหรับให้ช่องกรอกข้อความมี Dropdown) -->
     <datalist id="timeOptions">
-        <option value="17.00 - 19.00 น."></option>
-        <option value="09.00 - 12.00 น."></option>
+        <option value="17.00-19.00"></option>
+        <option value="09.00-12.00"></option>
     </datalist>
 
     <!-- Calendar Grid -->
@@ -303,7 +303,8 @@
         "มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน",
         "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"
     ];
-    const daysOfWeek = ["อาทิตย์", "จันทร์", "อังคาร", "พุธ", "พฤหัสบดี", "ศุกร์", "เสาร์"];
+    // 1. เรียงวันจันทร์ขึ้นก่อน
+    const daysOfWeek = ["จันทร์", "อังคาร", "พุธ", "พฤหัสบดี", "ศุกร์", "เสาร์", "อาทิตย์"];
 
     window.onload = function() {
         const monthSelect = document.getElementById('monthSelect');
@@ -346,7 +347,10 @@
             grid.appendChild(header);
         });
 
-        const firstDay = new Date(year, month, 1).getDay();
+        // 2. ปรับสูตรให้วันจันทร์เป็นวันแรกของสัปดาห์
+        let firstDay = new Date(year, month, 1).getDay();
+        firstDay = firstDay === 0 ? 6 : firstDay - 1; 
+        
         const daysInMonth = new Date(year, month + 1, 0).getDate();
 
         for (let i = 0; i < firstDay; i++) {
@@ -363,12 +367,12 @@
                 <div class="date-number">${day}</div>
                 
                 <select class="status-select" onchange="handleStatusChange(this)">
-                    <option value="open">เปิด</option>
-                    <option value="closed">ปิด</option>
+                    <option value="open">🟢 เปิดทำการ</option>
+                    <option value="closed">🔴 ปิดทำการ</option>
                 </select>
 
                 <div class="time-container">
-                    <input type="text" list="timeOptions" class="time-input" placeholder="ระบุเวลา">
+                    <input type="text" list="timeOptions" class="time-input" value="17.00 - 19.00 น." placeholder="ระบุเวลา">
                 </div>
             `;
             grid.appendChild(cell);
