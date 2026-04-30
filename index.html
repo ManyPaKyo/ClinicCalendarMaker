@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ปฏิทินเวลาทำการ - แพทย์ณฐวุฒิ</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;600&display=swap');
+
+        /* ตั้งค่าหน้ากระดาษ A4 แนวนอน สำหรับการพิมพ์ / Save as PDF */
+        @page {
+            size: A4 landscape;
+            margin: 10mm;
+        }
+
+        body {
+            font-family: 'Prompt', sans-serif;
+            background-color: #e2e8f0;
+            color: #333;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .container {
+            width: 297mm; /* ความกว้าง A4 แนวนอน */
+            min-height: 210mm; /* ความสูง A4 แนวนอน */
+            background: #fff;
+            padding: 20px 30px;
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Header Layout */
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 3px solid #1e3a63;
+            padding-bottom: 15px;
+            margin-bottom: 20px;
+        }
+
+        .header-logo img {
+            max-width: 250px;
+            max-height: 80px;
+            object-fit: contain;
+        }
+
+        .header-title {
+            text-align: center;
+            flex-grow: 1;
+        }
+
+        .header-title h1 {
+            color: #1e3a63;
+            margin: 0;
+            font-weight: 600;
+            /* ========================================= */
+            font-size: 40px; /* ✏️ แก้ขนาดชื่อคลินิก ตรงนี้ */
+            /* ========================================= */
+        }
+
+        .header-title h2 {
+            color: #475569;
+            margin: 5px 0 0 0;
+            font-weight: 400;
+            /* ========================================= */
+            font-size: 30px; /* ✏️ แก้ขนาดชื่อเดือนและปี ตรงนี้ */
+            /* ========================================= */
+        }
+
+        .qr-section {
+            display: flex;
+            gap: 15px;
+        }
+
+        .qr-section img {
+            width: 80px;
+            height: 80px;
+            border: 2px solid #f1f5f9;
+            border-radius: 8px;
+            padding: 2px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+
+        /* Controls Styles */
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        select, button, input {
+            font-family: 'Prompt', sans-serif;
+            padding: 8px 12px;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            font-size: 15px;
+            outline: none;
+            transition: all 0.2s;
+        }
+
+        select:focus, input:focus {
+            border-color: #1e3a63;
+            box-shadow: 0 0 0 2px rgba(30,58,99,0.2);
+        }
+
+        button {
+            background-color: #1e3a63;
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+            padding: 8px 20px;
+        }
+
+        button:hover {
+            background-color: #152b4a;
+            transform: translateY(-1px);
+        }
+
+        /* Calendar Styles */
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 8px;
+            flex-grow: 1;
+        }
+
+        .day-header {
+            text-align: center;
+            font-weight: 600;
+            color: #fff;
+            background-color: #1e3a63;
+            padding: 8px;
+            border-radius: 6px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            /* ========================================= */
+            font-size: 22px; /* ✏️ แก้ขนาดชื่อวัน (จันทร์-อาทิตย์) ตรงนี้ */
+            /* ========================================= */
+        }
+
+        .day-cell {
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 10px;
+            background: #fff;
+            display: flex;
+            flex-direction: column;
+            transition: background-color 0.3s ease, border-color 0.3s ease;
+            min-height: 90px;
+        }
+
+        /* ไฮไลท์สีเทาจางสำหรับวันหยุด */
+        .day-cell.is-closed {
+            background-color: #6e6e6e;
+            border-color: #cbd5e1;
+        }
+
+        .day-cell.empty {
+            background: transparent;
+            border: none;
+        }
+
+        /* ปรับวันที่ให้ใหญ่ขึ้น */
+        .date-number {
+            font-weight: 600;
+            margin-bottom: 5px;
+            text-align: right;
+            color: #1e3a63;
+            line-height: 1;
+            /* ========================================= */
+            font-size: 32px; /* ✏️ แก้ขนาดตัวเลขวันที่ (1, 2, 3...) ตรงนี้ */
+            /* ========================================= */
+        }
+
+        /* ปรับสถานะ เปิด/ปิด ให้ใหญ่ขึ้น */
+        .status-select {
+            width: 100%;
+            margin-bottom: 5px;
+            padding: 6px;
+            background-color: #f0fdf4;
+            border-color: #bbf7d0;
+            color: #166534;
+            font-weight: 600;
+            cursor: pointer;
+            text-align: center;
+            /* ========================================= */
+            font-size: 32px; /* ✏️ แก้ขนาดคำว่า "เปิดทำการ/ปิดทำการ" ตรงนี้ */
+            /* ========================================= */
+        }
+        
+        .status-select.closed {
+            background-color: #fef2f2;
+            border-color: #fecaca;
+            color: #991b1b;
+        }
+
+        /* กล่องพิมพ์/เลือก เวลา */
+        .time-input {
+            width: 100%;
+            padding: 6px;
+            color: #334155;
+            text-align: center;
+            box-sizing: border-box;
+            background-color: #f8fafc;
+            font-weight: 600;
+            /* ========================================= */
+            font-size: 24px; /* ✏️ แก้ขนาดเวลา (17.00 - 19.00 น.) ตรงนี้ */
+            /* ========================================= */
+        }
+
+        /* ------------------------------------- */
+        /* Print Styles - สำหรับเวลาสั่งพิมพ์ หรือ Save as PDF */
+        /* ------------------------------------- */
+        @media print {
+            body { 
+                background: none; 
+                padding: 0; 
+                margin: 0; 
+            }
+            .container { 
+                box-shadow: none; 
+                width: 100%; 
+                border-radius: 0;
+                padding: 0;
+            }
+            .controls { 
+                display: none !important; 
+            }
+            select, input {
+                appearance: none;
+                -webkit-appearance: none;
+                -moz-appearance: none;
+                border: none !important;
+                background: transparent !important;
+                padding: 0;
+                text-align: center;
+                text-align-last: center;
+            }
+            input::-webkit-calendar-picker-indicator {
+                display: none !important; /* ซ่อนลูกศร dropdown ตอนพิมพ์ */
+            }
+            .day-cell {
+                border: 1px solid #cbd5e1;
+            }
+            .status-select {
+                padding: 0;
+                margin-bottom: 2px;
+            }
+        }
+
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <!-- Header -->
+    <div class="header">
+        <div class="header-logo">
+            <img src="logo.jpg" alt="โลโก้คลินิก" onerror="this.src='Logo1.png'">
+        </div>
+        
+        <div class="header-title">
+            <h1>คลินิกเฉพาะทาง หู คอ จมูก</h1>
+            <h2 id="calendarTitle">ประจำเดือน...</h2>
+        </div>
+
+        <div class="qr-section">
+            <img src="Facebook.jpg" alt="Facebook QR Code">
+            <img src="LINE.jpg" alt="Line QR Code">
+        </div>
+    </div>
+
+    <!-- Controls -->
+    <div class="controls">
+        <select id="monthSelect"></select>
+        <select id="yearSelect"></select>
+        <button onclick="generateCalendar()">แสดงปฏิทิน</button>
+        <button onclick="window.print()" style="background-color: #059669;">พิมพ์ / บันทึก PDF</button>
+    </div>
+
+    <!-- รายการเวลาให้เลือก (Datalist สำหรับให้ช่องกรอกข้อความมี Dropdown) -->
+    <datalist id="timeOptions">
+        <option value="17.00 - 19.00 น."></option>
+        <option value="09.00 - 12.00 น."></option>
+    </datalist>
+
+    <!-- Calendar Grid -->
+    <div class="calendar-grid" id="calendarGrid">
+        <!-- JS จะสร้างช่องตารางให้ที่นี่ -->
+    </div>
+</div>
+
+<script>
+    const months = [
+        "มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน",
+        "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"
+    ];
+    const daysOfWeek = ["อาทิตย์", "จันทร์", "อังคาร", "พุธ", "พฤหัสบดี", "ศุกร์", "เสาร์"];
+
+    window.onload = function() {
+        const monthSelect = document.getElementById('monthSelect');
+        const yearSelect = document.getElementById('yearSelect');
+        const currentDate = new Date();
+        
+        months.forEach((month, index) => {
+            const option = document.createElement('option');
+            option.value = index;
+            option.text = month;
+            if (index === currentDate.getMonth()) option.selected = true;
+            monthSelect.appendChild(option);
+        });
+
+        const currentYear = currentDate.getFullYear();
+        for (let i = currentYear - 1; i <= currentYear + 5; i++) {
+            const option = document.createElement('option');
+            option.value = i;
+            option.text = i + 543;
+            if (i === currentYear) option.selected = true;
+            yearSelect.appendChild(option);
+        }
+
+        generateCalendar();
+    };
+
+    function generateCalendar() {
+        const month = parseInt(document.getElementById('monthSelect').value);
+        const year = parseInt(document.getElementById('yearSelect').value);
+        const grid = document.getElementById('calendarGrid');
+        
+        document.getElementById('calendarTitle').innerText = `ประจำเดือน ${months[month]} ${year + 543}`;
+        
+        grid.innerHTML = ''; 
+
+        daysOfWeek.forEach(day => {
+            const header = document.createElement('div');
+            header.className = 'day-header';
+            header.innerText = day;
+            grid.appendChild(header);
+        });
+
+        const firstDay = new Date(year, month, 1).getDay();
+        const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+        for (let i = 0; i < firstDay; i++) {
+            const emptyCell = document.createElement('div');
+            emptyCell.className = 'day-cell empty';
+            grid.appendChild(emptyCell);
+        }
+
+        for (let day = 1; day <= daysInMonth; day++) {
+            const cell = document.createElement('div');
+            cell.className = 'day-cell';
+
+            cell.innerHTML = `
+                <div class="date-number">${day}</div>
+                
+                <select class="status-select" onchange="handleStatusChange(this)">
+                    <option value="open">เปิด</option>
+                    <option value="closed">ปิด</option>
+                </select>
+
+                <div class="time-container">
+                    <input type="text" list="timeOptions" class="time-input" placeholder="ระบุเวลา">
+                </div>
+            `;
+            grid.appendChild(cell);
+        }
+    }
+
+    function handleStatusChange(selectElement) {
+        const timeContainer = selectElement.nextElementSibling;
+        const parentCell = selectElement.closest('.day-cell');
+        
+        if (selectElement.value === 'closed') {
+            selectElement.classList.add('closed');
+            timeContainer.style.display = 'none';
+            parentCell.classList.add('is-closed');
+        } else {
+            selectElement.classList.remove('closed');
+            timeContainer.style.display = 'block';
+            parentCell.classList.remove('is-closed');
+        }
+    }
+</script>
+
+</body>
+</html>
