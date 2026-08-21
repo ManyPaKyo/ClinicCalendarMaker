@@ -3,397 +3,1662 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ปฏิทินเวลาทำการ - แพทย์ณัฐวุฒิ</title>
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;600&display=swap');
+    <title>Clinic Calendar Maker Pro - ระบบสร้างปฏิทินเวลาทำการคลินิก</title>
+    <!-- Google Fonts: Prompt -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+    <!-- html2canvas สำหรับ Export รูปภาพ -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
-        /* ตั้งค่าหน้ากระดาษ A4 แนวนอน สำหรับการพิมพ์ / Save as PDF */
+    <style>
+        :root {
+            /* ธีมสีเริ่มต้น: Medical Navy */
+            --primary-color: #1e3a63;
+            --primary-dark: #122540;
+            --primary-light: #e8f0fe;
+            --accent-color: #0284c7;
+            --day-header-bg: #cccdff;
+            --day-header-text: #111827;
+            --cell-bg: #ffffff;
+            --cell-border: #cbd5e1;
+            --closed-bg: #94a3b8;
+            --closed-text: #1e293b;
+            --open-badge-bg: #dcfce7;
+            --open-badge-text: #166534;
+            --closed-badge-bg: #fee2e2;
+            --closed-badge-text: #991b1b;
+            --special-badge-bg: #fef3c7;
+            --special-badge-text: #92400e;
+            --footer-bg: #f8fafc;
+            --app-bg: #f1f5f9;
+            --font-family: 'Prompt', sans-serif;
+        }
+
+        /* ---------------------------------------------------- */
+        /* Print Rules สำหรับ A4 แนวนอน (Landscape) พอดี 1 แผ่น */
+        /* ---------------------------------------------------- */
         @page {
             size: A4 landscape;
-            margin: 10mm;
+            margin: 0;
+        }
+
+        * {
+            box-sizing: border-box;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
         }
 
         body {
-            font-family: 'Prompt', sans-serif;
-            background-color: #e2e8f0;
-            color: #333;
+            font-family: var(--font-family);
+            background-color: var(--app-bg);
+            color: #1e293b;
             margin: 0;
-            padding: 20px;
-            display: flex;
-            justify-content: center;
-        }
-
-        .container {
-            width: 297mm; /* ความกว้าง A4 แนวนอน */
-            min-height: 210mm; /* ความสูง A4 แนวนอน */
-            background: #fff;
-            padding: 20px 30px;
-            border-radius: 16px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-            box-sizing: border-box;
+            padding: 0;
+            min-height: 100vh;
             display: flex;
             flex-direction: column;
         }
 
-        /* Header Layout */
-        .header {
+        /* Top Application Bar */
+        .app-header {
+            background: #1e293b;
+            color: #ffffff;
+            padding: 12px 24px;
             display: flex;
             align-items: center;
             justify-content: space-between;
-            border-bottom: 3px solid #1e3a63;
-            padding-bottom: 15px;
-            margin-bottom: 20px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            position: sticky;
+            top: 0;
+            z-index: 100;
         }
 
-        .header-logo img {
-            max-width: 250px;
-            max-height: 80px;
+        .app-brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 1.15rem;
+            font-weight: 600;
+            letter-spacing: 0.3px;
+        }
+
+        .app-brand-badge {
+            background: linear-gradient(135deg, #0284c7, #06b6d4);
+            color: white;
+            font-size: 0.75rem;
+            padding: 2px 8px;
+            border-radius: 999px;
+            font-weight: 500;
+        }
+
+        .app-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        /* ปุ่มคำสั่งต่างๆ */
+        .btn {
+            font-family: var(--font-family);
+            font-size: 14px;
+            font-weight: 500;
+            padding: 8px 16px;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            line-height: 1.4;
+            text-decoration: none;
+        }
+
+        .btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.12);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn-primary {
+            background-color: var(--primary-color);
+            color: white;
+        }
+        .btn-primary:hover {
+            background-color: var(--primary-dark);
+        }
+
+        .btn-success {
+            background-color: #059669;
+            color: white;
+        }
+        .btn-success:hover {
+            background-color: #047857;
+        }
+
+        .btn-accent {
+            background-color: #0284c7;
+            color: white;
+        }
+        .btn-accent:hover {
+            background-color: #0369a1;
+        }
+
+        .btn-secondary {
+            background-color: #475569;
+            color: white;
+        }
+        .btn-secondary:hover {
+            background-color: #334155;
+        }
+
+        .btn-outline {
+            background: rgba(255,255,255,0.1);
+            color: white;
+            border: 1px solid rgba(255,255,255,0.25);
+        }
+        .btn-outline:hover {
+            background: rgba(255,255,255,0.2);
+        }
+
+        .btn-sm {
+            padding: 6px 12px;
+            font-size: 13px;
+            border-radius: 6px;
+        }
+
+        /* Control Bar ใต้เมนู */
+        .controls-toolbar {
+            background: #ffffff;
+            border-bottom: 1px solid #e2e8f0;
+            padding: 12px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            flex-wrap: wrap;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+        }
+
+        .controls-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .form-select, .form-input {
+            font-family: var(--font-family);
+            font-size: 14px;
+            padding: 7px 12px;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            background-color: #ffffff;
+            color: #1e293b;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .form-select:focus, .form-input:focus {
+            border-color: var(--accent-color);
+            box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.15);
+        }
+
+        /* Workspace Main Viewport */
+        .preview-viewport {
+            flex: 1;
+            padding: 24px;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            overflow-x: auto;
+        }
+
+        /* ---------------------------------------------------- */
+        /* A4 Canvas Page Container (สัดส่วน 297mm x 210mm) */
+        /* ---------------------------------------------------- */
+        .a4-page-wrapper {
+            transition: transform 0.2s;
+        }
+
+        .a4-page {
+            width: 297mm;
+            height: 209mm; /* เว้นระยะ 1mm กัน rounding error บนเบราว์เซอร์ */
+            max-height: 209mm;
+            background: #ffffff;
+            padding: 5mm 10mm 5mm 10mm;
+            border-radius: 4px;
+            box-shadow: 0 10px 35px rgba(0,0,0,0.12), 0 2px 10px rgba(0,0,0,0.06);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            position: relative;
+            box-sizing: border-box;
+            overflow: hidden;
+        }
+
+        /* Header Layout ของปฏิทิน A4 */
+        .calendar-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 3px solid var(--primary-color);
+            padding-bottom: 6px;
+            margin-bottom: 5px;
+            gap: 16px;
+            flex-shrink: 0;
+        }
+
+        /* กล่องโลโก้ ขยายขนาดให้ใหญ่พอดีและคมชัด */
+        .clinic-logo-box {
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            min-width: 150px;
+            max-width: 230px;
+            height: 68px;
+        }
+
+        .clinic-logo-box img {
+            max-width: 100%;
+            max-height: 68px;
             object-fit: contain;
         }
 
-        .header-title {
+        .clinic-title-box {
             text-align: center;
             flex-grow: 1;
         }
 
-        .header-title h1 {
-            color: #1e3a63;
+        .clinic-name {
+            color: var(--primary-color);
             margin: 0;
-            font-weight: 600;
-            /* ========================================= */
-            font-size: 30px; /* ✏️ แก้ขนาดชื่อคลินิก ตรงนี้ */
-            /* ========================================= */
+            font-weight: 700;
+            font-size: 25px;
+            line-height: 1.2;
+            letter-spacing: -0.2px;
         }
 
-        .header-title h2 {
-            color: #475569;
-            margin: 5px 0 0 0;
+        .calendar-month-title {
+            color: #334155;
+            margin: 2px 0 0 0;
+            font-weight: 600;
+            font-size: 21px;
+            line-height: 1.2;
+        }
+
+        .clinic-subtitle {
+            color: #64748b;
+            margin: 1px 0 0 0;
             font-weight: 400;
-            /* ========================================= */
-            font-size: 30px; /* ✏️ แก้ขนาดชื่อเดือนและปี ตรงนี้ */
-            /* ========================================= */
+            font-size: 12.5px;
         }
 
-        .qr-section {
+        /* กล่อง QR Codes: เว้นระยะห่าง 20px ให้สแกนง่าย */
+        .qr-codes-box {
             display: flex;
-            gap: 15px;
+            align-items: center;
+            gap: 20px;
+            min-width: 150px;
+            justify-content: flex-end;
         }
 
-        .qr-section img {
-            width: 80px;
-            height: 80px;
-            border: 2px solid #f1f5f9;
-            border-radius: 8px;
-            padding: 2px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-        }
-
-        /* Controls Styles */
-        .controls {
-            display: flex;
-            justify-content: center;
-            gap: 15px;
-            margin-bottom: 15px;
-        }
-
-        select, button, input {
-            font-family: 'Prompt', sans-serif;
-            padding: 8px 12px;
-            border: 1px solid #cbd5e1;
-            border-radius: 8px;
-            font-size: 15px;
-            outline: none;
-            transition: all 0.2s;
-        }
-
-        select:focus, input:focus {
-            border-color: #1e3a63;
-            box-shadow: 0 0 0 2px rgba(30,58,99,0.2);
-        }
-
-        button {
-            background-color: #1e3a63;
-            color: white;
-            border: none;
-            cursor: pointer;
-            font-weight: 600;
-            padding: 8px 20px;
-        }
-
-        button:hover {
-            background-color: #152b4a;
-            transform: translateY(-1px);
-        }
-
-        /* Calendar Styles */
-        .calendar-grid {
-            display: grid;
-            grid-template-columns: repeat(7, 1fr);
-            gap: 8px;
-            flex-grow: 1;
-        }
-
-        .day-header {
-            text-align: center;
-            font-weight: 600;
-            color: #000000;
-            background-color: #cccdff;
-            padding: 8px;
-            border-radius: 6px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            /* ========================================= */
-            font-size: 22px; /* ✏️ แก้ขนาดชื่อวัน (จันทร์-อาทิตย์) ตรงนี้ */
-            /* ========================================= */
-        }
-
-        .day-cell {
-            border: 1px solid #e2e8f0;
-            border-radius: 8px;
-            padding: 10px;
-            background: #fff;
+        .qr-item {
             display: flex;
             flex-direction: column;
-            transition: background-color 0.3s ease, border-color 0.3s ease;
-            min-height: 90px;
+            align-items: center;
+            gap: 2px;
         }
 
-        /* ไฮไลท์สีเทาจางสำหรับวันหยุด */
-        .day-cell.is-closed {
-            background-color: #808080;
-            border-color: #cbd5e1;
+        .qr-item img {
+            width: 56px;
+            height: 56px;
+            border: 1.5px solid #cbd5e1;
+            border-radius: 6px;
+            padding: 2px;
+            background: #ffffff;
+            object-fit: contain;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+        }
+
+        .qr-label {
+            font-size: 10px;
+            font-weight: 600;
+            color: #334155;
+        }
+
+        /* ---------------------------------------------------- */
+        /* Calendar Table / Grid */
+        /* ---------------------------------------------------- */
+        .calendar-body {
+            flex: 1 1 auto;
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+        }
+
+        .days-header-row {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 5px;
+            margin-bottom: 4px;
+            flex-shrink: 0;
+        }
+
+        .day-col-header {
+            text-align: center;
+            font-weight: 700;
+            color: var(--day-header-text);
+            background-color: var(--day-header-bg);
+            padding: 3px 2px;
+            border-radius: 5px;
+            font-size: 16px;
+            line-height: 1.2;
+            letter-spacing: 0.2px;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+        }
+
+        .calendar-matrix {
+            flex: 1 1 auto;
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 5px;
+            min-height: 0;
+        }
+
+        /* ---------------------------------------------------- */
+        /* แต่ละช่องวัน (Day Cell Layout) */
+        /* ---------------------------------------------------- */
+        .day-cell {
+            border: 1.5px solid var(--cell-border);
+            border-radius: 7px;
+            padding: 2px 3px;
+            background: var(--cell-bg);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-around;
+            position: relative;
+            overflow: hidden;
+            box-sizing: border-box;
+            transition: all 0.15s ease;
         }
 
         .day-cell.empty {
             background: transparent;
-            border: none;
+            border: 1px dashed rgba(203, 213, 225, 0.4);
+            visibility: visible;
         }
 
-        /* ปรับวันที่ให้ใหญ่ขึ้น */
+        /* วันปิดทำการ */
+        .day-cell.is-closed {
+            background-color: var(--closed-bg) !important;
+            border-color: #64748b;
+        }
+
+        /* บรรทัดที่ 1: วันที่อยู่ตรงกลาง ตัวเลขใหญ่พอดี (24px) */
         .date-number {
-            font-weight: 600;
-            margin-bottom: 5px;
-            text-align: right;
-            color: #1e3a63;
+            font-weight: 700;
+            color: var(--primary-color);
+            font-size: 24px;
             line-height: 1;
-            /* ========================================= */
-            font-size: 30px; /* ✏️ แก้ขนาดตัวเลขวันที่ (1, 2, 3...) ตรงนี้ */
-            /* ========================================= */
+            text-align: center;
+            margin: 0;
         }
 
-        /* ปรับสถานะ เปิด/ปิด ให้ใหญ่ขึ้น */
-        .status-select {
-            width: 100%;
-            margin-bottom: 5px;
-            padding: 6px;
-            background-color: #f0fdf4;
-            border-color: #bbf7d0;
-            color: #000000;
-            font-weight: 600;
+        .day-cell.is-closed .date-number {
+            color: #0f172a;
+        }
+
+        /* บรรทัดที่ 2: ป้ายสถานะ เปิด/ปิด ใหญ่ขึ้น (20px) */
+        .status-badge-select {
+            font-family: var(--font-family);
+            font-size: 20px;
+            font-weight: 700;
+            padding: 0 4px;
+            border-radius: 5px;
+            border: 1px solid transparent;
             cursor: pointer;
+            outline: none;
             text-align: center;
-            /* ========================================= */
-            font-size: 30px; /* ✏️ แก้ขนาดคำว่า "เปิดทำการ/ปิดทำการ" ตรงนี้ */
-            /* ========================================= */
-        }
-        
-        .status-select.closed {
-            background-color: #fef2f2;
-            border-color: #fecaca;
-            color: #000000;
+            text-align-last: center;
+            line-height: 1.15;
+            width: 88%;
+            max-width: 115px;
+            margin: 0;
+            appearance: auto;
+            -webkit-appearance: auto;
         }
 
-        /* กล่องพิมพ์/เลือก เวลา */
-        .time-input {
-            width: 100%;
-            padding: 6px;
-            color: #334155;
-            text-align: center;
-            box-sizing: border-box;
-            background-color: #f8fafc;
+        .status-badge-select.status-open {
+            background-color: var(--open-badge-bg);
+            color: var(--open-badge-text);
+            border-color: #86efac;
+        }
+
+        .status-badge-select.status-closed {
+            background-color: var(--closed-badge-bg);
+            color: var(--closed-badge-text);
+            border-color: #fca5a5;
+        }
+
+        .status-badge-select.status-special {
+            background-color: var(--special-badge-bg);
+            color: var(--special-badge-text);
+            border-color: #fde68a;
+        }
+
+        /* บรรทัดที่ 3: เวลาทำการ ใหญ่ขึ้น (16.5px) และฟิตพอดี */
+        .time-input-field {
+            width: 95%;
+            font-family: var(--font-family);
+            font-size: 16.5px;
             font-weight: 600;
-            /* ========================================= */
-            font-size: 20px; /* ✏️ แก้ขนาดเวลา (17.00 - 19.00 น.) ตรงนี้ */
-            /* ========================================= */
+            text-align: center;
+            padding: 1px 2px;
+            border-radius: 4px;
+            border: 1px solid #cbd5e1;
+            background-color: #f8fafc;
+            color: #1e293b;
+            outline: none;
+            line-height: 1.15;
+            margin: 0;
+            transition: all 0.15s;
         }
 
-        /* ------------------------------------- */
-        /* Print Styles - สำหรับเวลาสั่งพิมพ์ หรือ Save as PDF */
-        /* ------------------------------------- */
+        .time-input-field:focus {
+            border-color: var(--accent-color);
+            background-color: #ffffff;
+            box-shadow: 0 0 0 2px rgba(2, 132, 199, 0.2);
+        }
+
+        /* ---------------------------------------------------- */
+        /* แถบประกาศสำคัญ/หมายเหตุท้ายปฏิทิน */
+        /* ---------------------------------------------------- */
+        .calendar-footer {
+            background-color: var(--footer-bg);
+            border: 1px solid #e2e8f0;
+            border-radius: 5px;
+            padding: 4px 10px;
+            margin-top: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            flex-shrink: 0;
+            transition: opacity 0.25s ease, background-color 0.25s ease;
+        }
+
+        /* เมื่อไม่ได้เลือก Checkbox: Fade ออกไปบนหน้าจอ */
+        .calendar-footer.is-faded {
+            opacity: 0.38;
+            background-color: #f1f5f9;
+        }
+
+        .footer-note-text {
+            font-size: 13px;
+            color: #334155;
+            font-weight: 500;
+            width: 100%;
+            border: none;
+            background: transparent;
+            outline: none;
+        }
+
+        /* ---------------------------------------------------- */
+        /* Drawer / Modal Dialogs สำหรับ Settings */
+        /* ---------------------------------------------------- */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(15, 23, 42, 0.6);
+            backdrop-filter: blur(4px);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            padding: 20px;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal-card {
+            background: #ffffff;
+            border-radius: 14px;
+            width: 100%;
+            max-width: 650px;
+            max-height: 90vh;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2), 0 8px 10px -6px rgba(0, 0, 0, 0.2);
+            overflow: hidden;
+            animation: modalPop 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        @keyframes modalPop {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        .modal-header {
+            padding: 16px 20px;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: #f8fafc;
+        }
+
+        .modal-header h3 {
+            margin: 0;
+            font-size: 1.15rem;
+            color: #0f172a;
+            font-weight: 600;
+        }
+
+        .modal-close-btn {
+            background: transparent;
+            border: none;
+            font-size: 20px;
+            color: #64748b;
+            cursor: pointer;
+            line-height: 1;
+            padding: 4px 8px;
+            border-radius: 6px;
+        }
+        .modal-close-btn:hover {
+            color: #0f172a;
+            background: #e2e8f0;
+        }
+
+        .modal-body {
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+        }
+
+        .settings-section {
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 14px 16px;
+            background: #fafafa;
+        }
+
+        .settings-section-title {
+            font-weight: 600;
+            font-size: 14px;
+            color: var(--primary-color);
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .settings-grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .form-group label {
+            font-size: 13px;
+            font-weight: 500;
+            color: #475569;
+        }
+
+        .theme-swatches {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .theme-swatch {
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            cursor: pointer;
+            border: 3px solid #fff;
+            box-shadow: 0 0 0 2px #cbd5e1;
+            transition: transform 0.15s, box-shadow 0.15s;
+        }
+
+        .theme-swatch:hover {
+            transform: scale(1.1);
+        }
+
+        .theme-swatch.active {
+            box-shadow: 0 0 0 3px #0284c7;
+        }
+
+        .preset-day-row {
+            display: grid;
+            grid-template-columns: 90px 100px 1fr;
+            gap: 8px;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        /* ---------------------------------------------------- */
+        /* PRINT SPECIFIC CSS (สำหรับสั่งพิมพ์ หรือ Save as PDF) */
+        /* ---------------------------------------------------- */
         @media print {
-            body { 
-                background: none; 
-                padding: 0; 
-                margin: 0; 
+            body {
+                background: none !important;
+                padding: 0 !important;
+                margin: 0 !important;
             }
-            .container { 
-                box-shadow: none; 
-                width: 100%; 
-                border-radius: 0;
-                padding: 0;
+
+            .app-header,
+            .controls-toolbar,
+            .modal-overlay,
+            .btn,
+            .no-print {
+                display: none !important;
             }
-            .controls { 
-                display: none !important; 
+
+            .preview-viewport {
+                padding: 0 !important;
+                margin: 0 !important;
+                display: block !important;
+                overflow: visible !important;
             }
+
+            .a4-page-wrapper {
+                transform: none !important;
+            }
+
+            .a4-page {
+                box-shadow: none !important;
+                border-radius: 0 !important;
+                width: 297mm !important;
+                height: 209mm !important;
+                max-height: 209mm !important;
+                padding: 5mm 10mm 5mm 10mm !important;
+                page-break-after: avoid !important;
+                page-break-inside: avoid !important;
+            }
+
+            /* ซ่อน Footer ทันทีตอนสั่งพิมพ์ถ้าถูก Fade ปิดไว้ */
+            .calendar-footer.is-faded {
+                display: none !important;
+            }
+
             select, input {
-                appearance: none;
-                -webkit-appearance: none;
-                -moz-appearance: none;
+                appearance: none !important;
+                -webkit-appearance: none !important;
+                -moz-appearance: none !important;
                 border: none !important;
                 background: transparent !important;
-                padding: 0;
-                text-align: center;
-                text-align-last: center;
+                box-shadow: none !important;
             }
+
             input::-webkit-calendar-picker-indicator {
-                display: none !important; /* ซ่อนลูกศร dropdown ตอนพิมพ์ */
-            }
-            .day-cell {
-                border: 1px solid #cbd5e1;
-            }
-            .status-select {
-                padding: 0;
-                margin-bottom: 2px;
+                display: none !important;
             }
         }
-
     </style>
 </head>
 <body>
 
-<div class="container">
-    <!-- Header -->
-    <div class="header">
-        <div class="header-logo">
-            <img src="logo.jpg" alt="โลโก้คลินิก" onerror="this.src='Logo1.png'">
+    <!-- 1. Top Navigation Bar -->
+    <header class="app-header no-print">
+        <div class="app-brand">
+            <span>📅 Clinic Calendar Maker</span>
+            <span class="app-brand-badge">PRO A4</span>
         </div>
-        
-        <div class="header-title">
-            <h1>แพทย์ณัฐวุฒิ คลินิกเฉพาะทาง หู คอ จมูก</h1>
-            <h2 id="calendarTitle">ประจำเดือน...</h2>
+        <div class="app-actions">
+            <button class="btn btn-outline btn-sm" onclick="exportDataAsJSON()" title="ส่งออกข้อมูลการตั้งค่าและตารางเวลาเป็นไฟล์ JSON">
+                💾 Export JSON
+            </button>
+            <label class="btn btn-outline btn-sm" style="cursor: pointer; margin: 0;" title="นำเข้าข้อมูลการตั้งค่าจากไฟล์ JSON">
+                📂 Import JSON
+                <input type="file" accept=".json" style="display: none;" onchange="importDataFromJSON(event)">
+            </label>
+            <button class="btn btn-outline btn-sm" onclick="openSettingsModal()">
+                ⚙️ ตั้งค่าคลินิก & โลโก้
+            </button>
+            <button class="btn btn-accent btn-sm" onclick="exportAsImage('png')">
+                🖼️ บันทึกเป็นรูปภาพ (PNG)
+            </button>
+            <button class="btn btn-success" onclick="window.print()">
+                🖨️ พิมพ์ / บันทึก PDF (A4 พอดี 1 หน้า)
+            </button>
+        </div>
+    </header>
+
+    <!-- 2. Controls Toolbar -->
+    <section class="controls-toolbar no-print">
+        <div class="controls-group">
+            <label for="monthSelect" style="font-size: 14px; font-weight: 600;">เดือน:</label>
+            <select id="monthSelect" class="form-select" onchange="onMonthOrYearChange()"></select>
+
+            <label for="yearSelect" style="font-size: 14px; font-weight: 600;">ปี พ.ศ.:</label>
+            <select id="yearSelect" class="form-select" onchange="onMonthOrYearChange()"></select>
+
+            <button class="btn btn-primary btn-sm" onclick="applyDefaultPresetsToAllDays()">
+                ⚡ เติมเวลาเริ่มต้นทั้งเดือน
+            </button>
         </div>
 
-        <div class="qr-section">
-            <img src="Facebook.jpg" alt="Facebook QR Code">
-            <img src="LINE.jpg" alt="Line QR Code">
+        <!-- เครื่องมือด่วน -->
+        <div class="controls-group">
+            <label style="font-size: 13px; color: #64748b; font-weight: 500;">เครื่องมือด่วน:</label>
+            <button class="btn btn-secondary btn-sm" onclick="openPresetModal()">
+                🕒 เวลาเริ่มต้น (Presets)
+            </button>
+            <button class="btn btn-secondary btn-sm" onclick="resetCurrentMonthSchedule()">
+                🔄 ล้างตาราง
+            </button>
         </div>
-    </div>
+    </section>
 
-    <!-- Controls -->
-    <div class="controls">
-        <select id="monthSelect"></select>
-        <select id="yearSelect"></select>
-        <button onclick="generateCalendar()">แสดงปฏิทิน</button>
-        <button onclick="window.print()" style="background-color: #059669;">พิมพ์ / บันทึก PDF</button>
-    </div>
+    <!-- 3. Main A4 Preview Viewport -->
+    <main class="preview-viewport">
+        <div class="a4-page-wrapper" id="a4Wrapper">
+            <div class="a4-page" id="calendarPrintArea">
+                
+                <!-- Header ของปฏิทิน -->
+                <div class="calendar-header">
+                    <!-- โลโก้คลินิก (ซ้าย) ปรับขนาดใหญ่ขึ้นให้พอดีสมดุล -->
+                    <div class="clinic-logo-box">
+                        <img id="displayLogo" src="logo.jpg" alt="Logo คลินิก" onerror="this.src='Logo1.png'">
+                    </div>
 
-    <!-- รายการเวลาให้เลือก (Datalist สำหรับให้ช่องกรอกข้อความมี Dropdown) -->
-    <datalist id="timeOptions">
-        <option value="17.00-19.00"></option>
-        <option value="09.00-12.00"></option>
+                    <!-- ชื่อคลินิกและชื่อเดือน (กลาง) -->
+                    <div class="clinic-title-box">
+                        <h1 class="clinic-name" id="displayClinicName" contenteditable="true" onblur="saveClinicProfile()" title="คลิกเพื่อแก้ไขชื่อคลินิกได้โดยตรง">
+                            แพทย์ณัฐวุฒิ คลินิกเฉพาะทาง หู คอ จมูก
+                        </h1>
+                        <h2 class="calendar-month-title" id="calendarMonthTitle">
+                            ประจำเดือน...
+                        </h2>
+                        <div class="clinic-subtitle" id="displayClinicSubtitle" contenteditable="true" onblur="saveClinicProfile()" title="คลิกเพื่อแก้ไขข้อความย่อยได้">
+                            โทร. 093-0639978 • ให้บริการตรวจรักษาโรคหู คอ จมูก และภูมิแพ้
+                        </div>
+                    </div>
+
+                    <!-- QR Code (ขวา) เว้นระยะห่าง 20px ให้สแกนง่าย -->
+                    <div class="qr-codes-box" id="qrContainer">
+                        <div class="qr-item" id="qrItem1">
+                            <img id="displayQrFb" src="Facebook.jpg" alt="Facebook QR">
+                            <span class="qr-label" id="labelQrFb">Facebook</span>
+                        </div>
+                        <div class="qr-item" id="qrItem2">
+                            <img id="displayQrLine" src="LINE.jpg" alt="LINE QR">
+                            <span class="qr-label" id="labelQrLine">LINE ID</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Body: Days Header + Matrix Grid -->
+                <div class="calendar-body">
+                    <!-- แถบชื่อวัน จันทร์ - อาทิตย์ -->
+                    <div class="days-header-row">
+                        <div class="day-col-header">จันทร์</div>
+                        <div class="day-col-header">อังคาร</div>
+                        <div class="day-col-header">พุธ</div>
+                        <div class="day-col-header">พฤหัสบดี</div>
+                        <div class="day-col-header">ศุกร์</div>
+                        <div class="day-col-header">เสาร์</div>
+                        <div class="day-col-header">อาทิตย์</div>
+                    </div>
+
+                    <!-- ตารางวันที่ Matrix -->
+                    <div class="calendar-matrix" id="calendarGrid">
+                        <!-- JS จะสร้าง Grid เซลล์ที่นี่ -->
+                    </div>
+                </div>
+
+                <!-- Footer: แถบประกาศ / หมายเหตุท้ายปฏิทิน พร้อม Checkbox เปิด/ปิด (Fade) -->
+                <div class="calendar-footer" id="calendarFooter">
+                    <!-- Checkbox ในโหมดหน้าจอ (ไม่หายไปไหน Fade ออกไปเมื่อไม่ได้ติ๊ก) -->
+                    <label class="no-print" style="display: inline-flex; align-items: center; gap: 6px; cursor: pointer; font-size: 13px; color: #475569; user-select: none; flex-shrink: 0;" title="ติ๊กเพื่อเปิด/ปิดการแสดงและพิมพ์ข้อความประกาศท้ายตาราง">
+                        <input type="checkbox" id="chkShowFooterAnnouncement" checked onchange="toggleFooterAnnouncement(this.checked)">
+                        <span style="font-weight: 600;">📢 ข้อความท้าย:</span>
+                    </label>
+                    <input type="text" class="footer-note-text" id="footerAnnouncement" 
+                           placeholder="ระบุข้อความประกาศเพิ่มเติมท้ายปฏิทิน เช่น กรุณานัดหมายล่วงหน้า หรือ วันหยุดเทศกาล..." 
+                           oninput="saveMonthSpecificData()">
+                </div>
+
+            </div>
+        </div>
+    </main>
+
+    <!-- Datalist Autocomplete สำหรับ Quick Time Suggestions (เฉพาะ 2 ค่ามาตรฐาน ไม่ซ้ำซ้อน) -->
+    <datalist id="commonTimePresets">
+        <option value="17.00 - 19.00"></option>
+        <option value="09.00 - 12.00"></option>
     </datalist>
 
-    <!-- Calendar Grid -->
-    <div class="calendar-grid" id="calendarGrid">
-        <!-- JS จะสร้างช่องตารางให้ที่นี่ -->
-    </div>
-</div>
-
-<script>
-    const months = [
-        "มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน",
-        "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"
-    ];
-    // 1. เรียงวันจันทร์ขึ้นก่อน
-    const daysOfWeek = ["จันทร์", "อังคาร", "พุธ", "พฤหัสบดี", "ศุกร์", "เสาร์", "อาทิตย์"];
-
-    window.onload = function() {
-        const monthSelect = document.getElementById('monthSelect');
-        const yearSelect = document.getElementById('yearSelect');
-        const currentDate = new Date();
-        
-        months.forEach((month, index) => {
-            const option = document.createElement('option');
-            option.value = index;
-            option.text = month;
-            if (index === currentDate.getMonth()) option.selected = true;
-            monthSelect.appendChild(option);
-        });
-
-        const currentYear = currentDate.getFullYear();
-        for (let i = currentYear - 1; i <= currentYear + 5; i++) {
-            const option = document.createElement('option');
-            option.value = i;
-            option.text = i + 543;
-            if (i === currentYear) option.selected = true;
-            yearSelect.appendChild(option);
-        }
-
-        generateCalendar();
-    };
-
-    function generateCalendar() {
-        const month = parseInt(document.getElementById('monthSelect').value);
-        const year = parseInt(document.getElementById('yearSelect').value);
-        const grid = document.getElementById('calendarGrid');
-        
-        document.getElementById('calendarTitle').innerText = `ประจำเดือน ${months[month]} ${year + 543}`;
-        
-        grid.innerHTML = ''; 
-
-        daysOfWeek.forEach(day => {
-            const header = document.createElement('div');
-            header.className = 'day-header';
-            header.innerText = day;
-            grid.appendChild(header);
-        });
-
-        // 2. ปรับสูตรให้วันจันทร์เป็นวันแรกของสัปดาห์
-        let firstDay = new Date(year, month, 1).getDay();
-        firstDay = firstDay === 0 ? 6 : firstDay - 1; 
-        
-        const daysInMonth = new Date(year, month + 1, 0).getDate();
-
-        for (let i = 0; i < firstDay; i++) {
-            const emptyCell = document.createElement('div');
-            emptyCell.className = 'day-cell empty';
-            grid.appendChild(emptyCell);
-        }
-
-        for (let day = 1; day <= daysInMonth; day++) {
-            const cell = document.createElement('div');
-            cell.className = 'day-cell';
-
-            cell.innerHTML = `
-                <div class="date-number">${day}</div>
+    <!-- 4. Modal: ตั้งค่าข้อมูลคลินิก โลโก้ และธีม -->
+    <div class="modal-overlay" id="settingsModal">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3>⚙️ ตั้งค่าคลินิก โลโก้ และธีมสี</h3>
+                <button class="modal-close-btn" onclick="closeSettingsModal()">&times;</button>
+            </div>
+            <div class="modal-body">
                 
-                <select class="status-select" onchange="handleStatusChange(this)">
-                    <option value="open">เปิด</option>
-                    <option value="closed">ปิด</option>
-                </select>
-
-                <div class="time-container">
-                    <input type="text" list="timeOptions" class="time-input" placeholder="ระบุเวลา">
+                <!-- ข้อมูลคลินิก -->
+                <div class="settings-section">
+                    <div class="settings-section-title">🏥 ข้อมูลคลินิก</div>
+                    <div class="form-group" style="margin-bottom: 10px;">
+                        <label>ชื่อคลินิก</label>
+                        <input type="text" class="form-input" id="settingClinicName" placeholder="เช่น แพทย์ณัฐวุฒิ คลินิกเฉพาะทาง หู คอ จมูก">
+                    </div>
+                    <div class="form-group">
+                        <label>คำบรรยาย / เบอร์โทรติดต่อ</label>
+                        <input type="text" class="form-input" id="settingClinicSubtitle" placeholder="โทร. 093-0639978 • ให้บริการตรวจรักษาโรคหู คอ จมูก และภูมิแพ้">
+                    </div>
                 </div>
-            `;
-            grid.appendChild(cell);
-        }
-    }
 
-    function handleStatusChange(selectElement) {
-        const timeContainer = selectElement.nextElementSibling;
-        const parentCell = selectElement.closest('.day-cell');
-        
-        if (selectElement.value === 'closed') {
-            selectElement.classList.add('closed');
-            timeContainer.style.display = 'none';
-            parentCell.classList.add('is-closed');
-        } else {
-            selectElement.classList.remove('closed');
-            timeContainer.style.display = 'block';
-            parentCell.classList.remove('is-closed');
-        }
-    }
-</script>
+                <!-- อัปโหลดรูปภาพ -->
+                <div class="settings-section">
+                    <div class="settings-section-title">🖼️ โลโก้ และ QR Code</div>
+                    <div class="settings-grid-2">
+                        <div class="form-group">
+                            <label>โลโก้คลินิก (Logo)</label>
+                            <input type="file" class="form-input" id="uploadLogo" accept="image/*" onchange="handleImageUpload(event, 'logo')">
+                        </div>
+                        <div class="form-group">
+                            <label>QR Code 1 (Facebook / อื่นๆ)</label>
+                            <input type="file" class="form-input" id="uploadQrFb" accept="image/*" onchange="handleImageUpload(event, 'qrFb')">
+                        </div>
+                    </div>
+                    <div class="form-group" style="margin-top: 10px;">
+                        <label>QR Code 2 (LINE / อื่นๆ)</label>
+                        <input type="file" class="form-input" id="uploadQrLine" accept="image/*" onchange="handleImageUpload(event, 'qrLine')">
+                    </div>
+                    <div style="margin-top: 8px; text-align: right;">
+                        <button class="btn btn-outline btn-sm" style="color: #64748b; border-color: #cbd5e1;" onclick="resetImagesToDefault()">
+                            รีเซ็ตรูปภาพเป็นค่าเริ่มต้น
+                        </button>
+                    </div>
+                </div>
 
+                <!-- ธีมสี -->
+                <div class="settings-section">
+                    <div class="settings-section-title">🎨 เลือกธีมสีปฏิทิน</div>
+                    <div class="theme-swatches" id="themeSwatchesContainer">
+                        <!-- JS จะ Render สวอทช์สี -->
+                    </div>
+                </div>
+
+                <!-- สำรองและนำเข้าข้อมูล JSON -->
+                <div class="settings-section">
+                    <div class="settings-section-title">💾 สำรอง & นำเข้าข้อมูล (Backup / Restore JSON)</div>
+                    <p style="font-size: 12.5px; color: #64748b; margin: 0 0 10px 0;">
+                        ส่งออกข้อมูลคลินิก โลโก้ และตารางเวลาทั้งหมดเป็นไฟล์ JSON เพื่อสำรองไว้ หรือนำเข้าสู่เครื่องคอมพิวเตอร์เครื่องอื่น
+                    </p>
+                    <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                        <button class="btn btn-outline btn-sm" style="color: #1e3a63; border-color: #1e3a63;" onclick="exportDataAsJSON()">
+                            📥 ส่งออกข้อมูล (Export JSON)
+                        </button>
+                        <label class="btn btn-outline btn-sm" style="color: #059669; border-color: #059669; cursor: pointer; margin: 0;">
+                            📤 นำเข้าข้อมูล (Import JSON)
+                            <input type="file" accept=".json" style="display: none;" onchange="importDataFromJSON(event)">
+                        </label>
+                    </div>
+                </div>
+
+                <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 8px;">
+                    <button class="btn btn-secondary" onclick="closeSettingsModal()">ปิด</button>
+                    <button class="btn btn-primary" onclick="applyAndSaveSettingsModal()">บันทึกการตั้งค่า</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 5. Modal: ตั้งค่าเวลาเริ่มต้น (Presets) -->
+    <div class="modal-overlay" id="presetModal">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3>🕒 ตั้งค่าเวลาทำการเริ่มต้น (Default Schedule Presets)</h3>
+                <button class="modal-close-btn" onclick="closePresetModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p style="font-size: 13px; color: #64748b; margin: 0 0 10px 0;">
+                    กำหนดสถานะและเวลาทำการมาตรฐานของแต่ละวัน เมื่อกดปุ่ม <strong>"เติมเวลาเริ่มต้นทั้งเดือน"</strong> ระบบจะนำค่าด้านล่างนี้ไปใส่ให้ทันที
+                </p>
+
+                <div class="settings-section">
+                    <div id="presetDaysList">
+                        <!-- JS จะสร้างแถว จันทร์-อาทิตย์ ให้ที่นี่ -->
+                    </div>
+                </div>
+
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 10px;">
+                    <button class="btn btn-outline btn-sm" style="color: #64748b; border-color: #cbd5e1;" onclick="resetPresetsToFactory()">
+                        คืนค่าเริ่มต้นระบบ
+                    </button>
+                    <div style="display: flex; gap: 10px;">
+                        <button class="btn btn-secondary" onclick="closePresetModal()">ปิด</button>
+                        <button class="btn btn-primary" onclick="savePresetsAndApply()">บันทึก & ใช้งานทันที</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ======================================================== -->
+    <!-- JAVASCRIPT LOGIC ENGINE -->
+    <!-- ======================================================== -->
+    <script>
+        // ฟังก์ชันช่วยจัดรูปแบบเวลามาตรฐาน (ตัด น. และจัดช่องไฟ)
+        function cleanTimeString(t) {
+            if (!t) return '';
+            let cleaned = t.replace(/\s*น\.?/g, '').trim();
+            if (cleaned === '17.00-19.00') cleaned = '17.00 - 19.00';
+            if (cleaned === '09.00-12.00' || cleaned === '9.00-12.00' || cleaned === '9.00 - 12.00') cleaned = '09.00 - 12.00';
+            return cleaned;
+        }
+
+        // ชื่อเดือนภาษาไทย
+        const monthsThai = [
+            "มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน",
+            "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"
+        ];
+
+        const daysOfWeekList = [
+            { id: 1, name: "จันทร์", defaultStatus: "open", defaultTime: "17.00 - 19.00" },
+            { id: 2, name: "อังคาร", defaultStatus: "open", defaultTime: "17.00 - 19.00" },
+            { id: 3, name: "พุธ", defaultStatus: "open", defaultTime: "17.00 - 19.00" },
+            { id: 4, name: "พฤหัสบดี", defaultStatus: "open", defaultTime: "17.00 - 19.00" },
+            { id: 5, name: "ศุกร์", defaultStatus: "open", defaultTime: "17.00 - 19.00" },
+            { id: 6, name: "เสาร์", defaultStatus: "closed", defaultTime: "" },
+            { id: 0, name: "อาทิตย์", defaultStatus: "closed", defaultTime: "" }
+        ];
+
+        // ธีมสีระดับพรีเมียม
+        const colorThemes = [
+            {
+                id: 'navy',
+                name: 'Medical Navy (มาตรฐาน)',
+                primary: '#1e3a63',
+                primaryDark: '#122540',
+                headerBg: '#cccdff',
+                headerText: '#111827',
+                swatchColor: '#1e3a63'
+            },
+            {
+                id: 'teal',
+                name: 'Modern Teal (ฟ้าอมเขียว)',
+                primary: '#0f766e',
+                primaryDark: '#115e59',
+                headerBg: '#99f6e4',
+                headerText: '#134e4a',
+                swatchColor: '#0f766e'
+            },
+            {
+                id: 'blue',
+                name: 'Royal Blue (น้ำเงินสดใส)',
+                primary: '#1d4ed8',
+                primaryDark: '#1e40af',
+                headerBg: '#bfdbfe',
+                headerText: '#1e3a8a',
+                swatchColor: '#1d4ed8'
+            },
+            {
+                id: 'emerald',
+                name: 'Emerald Health (เขียวสุขภาพ)',
+                primary: '#047857',
+                primaryDark: '#065f46',
+                headerBg: '#a7f3d0',
+                headerText: '#064e3b',
+                swatchColor: '#047857'
+            },
+            {
+                id: 'purple',
+                name: 'Royal Purple (ม่วงสง่างาม)',
+                primary: '#6b21a8',
+                primaryDark: '#581c87',
+                headerBg: '#e9d5ff',
+                headerText: '#3b0764',
+                swatchColor: '#6b21a8'
+            },
+            {
+                id: 'rose',
+                name: 'Warm Coral (ส้มคอรัล/ชมพู)',
+                primary: '#be123c',
+                primaryDark: '#9f1239',
+                headerBg: '#fecdd3',
+                headerText: '#881337',
+                swatchColor: '#be123c'
+            }
+        ];
+
+        // Global State
+        let currentYear = new Date().getFullYear();
+        let currentMonth = new Date().getMonth();
+        let appPresets = JSON.parse(JSON.stringify(daysOfWeekList));
+        let selectedThemeId = 'navy';
+
+        // ----------------------------------------------------
+        // Initialization
+        // ----------------------------------------------------
+        window.addEventListener('DOMContentLoaded', () => {
+            loadSavedProfileAndSettings();
+            initMonthYearSelects();
+            renderPresetDaysInputs();
+            renderThemeSwatches();
+            generateCalendarGrid();
+        });
+
+        // ----------------------------------------------------
+        // Storage & Profile Management
+        // ----------------------------------------------------
+        function loadSavedProfileAndSettings() {
+            // โหลดชื่อคลินิกและข้อมูล
+            const savedProfile = localStorage.getItem('clinic_profile');
+            const defaultSubtitle = "โทร. 093-0639978 • ให้บริการตรวจรักษาโรคหู คอ จมูก และภูมิแพ้";
+
+            if (savedProfile) {
+                try {
+                    const data = JSON.parse(savedProfile);
+                    if (data.name) document.getElementById('displayClinicName').innerText = data.name;
+                    if (data.subtitle) {
+                        if (data.subtitle.includes('081-xxx') || data.subtitle.includes('093-0639902')) {
+                            document.getElementById('displayClinicSubtitle').innerText = defaultSubtitle;
+                            saveClinicProfile();
+                        } else {
+                            document.getElementById('displayClinicSubtitle').innerText = data.subtitle;
+                        }
+                    }
+                } catch(e) { console.error(e); }
+            } else {
+                document.getElementById('displayClinicSubtitle').innerText = defaultSubtitle;
+            }
+
+            // โหลดรูปภาพ
+            const customLogo = localStorage.getItem('clinic_img_logo');
+            if (customLogo) document.getElementById('displayLogo').src = customLogo;
+
+            const customQrFb = localStorage.getItem('clinic_img_qrFb');
+            if (customQrFb) document.getElementById('displayQrFb').src = customQrFb;
+
+            const customQrLine = localStorage.getItem('clinic_img_qrLine');
+            if (customQrLine) document.getElementById('displayQrLine').src = customQrLine;
+
+            // โหลด Presets พร้อมจัดรูปแบบเวลา
+            const savedPresets = localStorage.getItem('clinic_schedule_presets');
+            if (savedPresets) {
+                try {
+                    const parsed = JSON.parse(savedPresets);
+                    parsed.forEach(p => { p.defaultTime = cleanTimeString(p.defaultTime); });
+                    appPresets = parsed;
+                } catch(e) { console.error(e); }
+            }
+
+            // โหลดธีมสี
+            const savedTheme = localStorage.getItem('clinic_theme_id');
+            if (savedTheme) {
+                applyTheme(savedTheme);
+            }
+
+            // โหลดสถานะ Checkbox แถบประกาศ (Fade / Normal)
+            const showFooter = localStorage.getItem('clinic_show_footer');
+            const chkFooter = document.getElementById('chkShowFooterAnnouncement');
+            if (showFooter !== null) {
+                const isChecked = showFooter === 'true';
+                chkFooter.checked = isChecked;
+                toggleFooterAnnouncement(isChecked, false);
+            }
+        }
+
+        function saveClinicProfile() {
+            const name = document.getElementById('displayClinicName').innerText.trim();
+            const subtitle = document.getElementById('displayClinicSubtitle').innerText.trim();
+            localStorage.setItem('clinic_profile', JSON.stringify({ name, subtitle }));
+        }
+
+        // ฟังก์ชันจัดการ Fade ข้อความประกาศท้ายตาราง
+        function toggleFooterAnnouncement(show, save = true) {
+            const footer = document.getElementById('calendarFooter');
+            const inputField = document.getElementById('footerAnnouncement');
+            
+            if (show) {
+                footer.classList.remove('is-faded');
+                inputField.disabled = false;
+            } else {
+                footer.classList.add('is-faded');
+                inputField.disabled = true;
+            }
+
+            if (save) {
+                localStorage.setItem('clinic_show_footer', show);
+            }
+        }
+
+        function applyTheme(themeId) {
+            const theme = colorThemes.find(t => t.id === themeId) || colorThemes[0];
+            selectedThemeId = theme.id;
+            document.documentElement.style.setProperty('--primary-color', theme.primary);
+            document.documentElement.style.setProperty('--primary-dark', theme.primaryDark);
+            document.documentElement.style.setProperty('--day-header-bg', theme.headerBg);
+            document.documentElement.style.setProperty('--day-header-text', theme.headerText);
+            localStorage.setItem('clinic_theme_id', theme.id);
+
+            // อัปเดต Active Swatch
+            document.querySelectorAll('.theme-swatch').forEach(el => {
+                el.classList.toggle('active', el.dataset.themeId === theme.id);
+            });
+        }
+
+        // ----------------------------------------------------
+        // Dropdowns & Calendar Rendering
+        // ----------------------------------------------------
+        function initMonthYearSelects() {
+            const monthSelect = document.getElementById('monthSelect');
+            const yearSelect = document.getElementById('yearSelect');
+            const now = new Date();
+
+            monthSelect.innerHTML = '';
+            monthsThai.forEach((m, idx) => {
+                const opt = document.createElement('option');
+                opt.value = idx;
+                opt.text = m;
+                if (idx === now.getMonth()) opt.selected = true;
+                monthSelect.appendChild(opt);
+            });
+
+            yearSelect.innerHTML = '';
+            const yNow = now.getFullYear();
+            for (let y = yNow - 2; y <= yNow + 6; y++) {
+                const opt = document.createElement('option');
+                opt.value = y;
+                opt.text = `${y + 543} (${y})`;
+                if (y === yNow) opt.selected = true;
+                yearSelect.appendChild(opt);
+            }
+
+            currentMonth = parseInt(monthSelect.value);
+            currentYear = parseInt(yearSelect.value);
+        }
+
+        function onMonthOrYearChange() {
+            currentMonth = parseInt(document.getElementById('monthSelect').value);
+            currentYear = parseInt(document.getElementById('yearSelect').value);
+            generateCalendarGrid();
+        }
+
+        function getMonthStorageKey(year, month) {
+            return `clinic_cal_data_${year}_${month}`;
+        }
+
+        function generateCalendarGrid() {
+            const month = currentMonth;
+            const year = currentYear;
+            const grid = document.getElementById('calendarGrid');
+
+            // อัปเดตหัวข้อเดือน
+            document.getElementById('calendarMonthTitle').innerText = `ประจำเดือน ${monthsThai[month]} ${year + 543}`;
+
+            // คำนวณวันแรก (0 = อาทิตย์, 1 = จันทร์ ... 6 = เสาร์)
+            // ให้สัปดาห์เริ่มที่ "จันทร์" (จันทร์=0, ..., อาทิตย์=6)
+            let firstDayIndex = new Date(year, month, 1).getDay();
+            firstDayIndex = firstDayIndex === 0 ? 6 : firstDayIndex - 1;
+
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+            const totalCells = firstDayIndex + daysInMonth;
+            const totalWeeks = Math.ceil(totalCells / 7);
+
+            // ปรับ Dynamic Grid Rows ให้เต็มความสูง A4 พอดี
+            grid.style.gridTemplateRows = `repeat(${totalWeeks}, 1fr)`;
+            grid.innerHTML = '';
+
+            // โหลดข้อมูลที่เคยเซฟไว้ในเดือนนี้
+            const savedDataKey = getMonthStorageKey(year, month);
+            let savedMonthData = {};
+            try {
+                const raw = localStorage.getItem(savedDataKey);
+                if (raw) savedMonthData = JSON.parse(raw);
+            } catch(e) { console.error(e); }
+
+            // โหลดข้อความประกาศ Footer
+            document.getElementById('footerAnnouncement').value = savedMonthData.announcement || '';
+
+            // ช่องว่างก่อนวันที่ 1
+            for (let i = 0; i < firstDayIndex; i++) {
+                const emptyCell = document.createElement('div');
+                emptyCell.className = 'day-cell empty';
+                grid.appendChild(emptyCell);
+            }
+
+            // สร้างช่องวันที่ 1 ถึงสิ้นเดือน
+            for (let day = 1; day <= daysInMonth; day++) {
+                const cellDate = new Date(year, month, day);
+                const dayOfWeek = cellDate.getDay(); // 0=อาทิตย์, 1=จันทร์...
+
+                // หา Preset ค่าเริ่มต้นของวันนี้
+                const preset = appPresets.find(p => p.id === dayOfWeek) || { defaultStatus: 'open', defaultTime: '' };
+
+                // ใช้ข้อมูลที่เคยบันทึกไว้ หรือใช้ Preset
+                const rawDayData = savedMonthData[day];
+                const dayData = rawDayData ? {
+                    status: rawDayData.status,
+                    time: cleanTimeString(rawDayData.time)
+                } : {
+                    status: preset.defaultStatus,
+                    time: preset.defaultStatus === 'closed' ? '' : cleanTimeString(preset.defaultTime)
+                };
+
+                const cell = document.createElement('div');
+                cell.className = `day-cell ${dayData.status === 'closed' ? 'is-closed' : ''}`;
+                cell.dataset.day = day;
+
+                // 3 บรรทัดตรงกลาง: วันที่ 24px > เปิด/ปิด 20px > เวลา 16.5px
+                cell.innerHTML = `
+                    <div class="date-number">${day}</div>
+
+                    <select class="status-badge-select status-${dayData.status}" onchange="handleCellStatusChange(this, ${day})">
+                        <option value="open" ${dayData.status === 'open' ? 'selected' : ''}>เปิด</option>
+                        <option value="closed" ${dayData.status === 'closed' ? 'selected' : ''}>ปิด</option>
+                        <option value="special" ${dayData.status === 'special' ? 'selected' : ''}>พิเศษ</option>
+                    </select>
+
+                    <input type="text" list="commonTimePresets" class="time-input-field" 
+                           value="${dayData.time || ''}" 
+                           placeholder="${dayData.status === 'closed' ? '-' : 'ระบุเวลา'}"
+                           autocomplete="on"
+                           ${dayData.status === 'closed' ? 'disabled style="opacity:0.35;"' : ''}
+                           oninput="saveMonthSpecificData()">
+                `;
+
+                grid.appendChild(cell);
+            }
+        }
+
+        // ----------------------------------------------------
+        // Day Cell Actions & Status Changes
+        // ----------------------------------------------------
+        function handleCellStatusChange(selectEl, day) {
+            const status = selectEl.value;
+            const cell = selectEl.closest('.day-cell');
+            const timeInput = cell.querySelector('.time-input-field');
+
+            // เปลี่ยนสี Badge
+            selectEl.className = `status-badge-select status-${status}`;
+
+            if (status === 'closed') {
+                cell.classList.add('is-closed');
+                timeInput.disabled = true;
+                timeInput.style.opacity = '0.35';
+                timeInput.value = '';
+                timeInput.placeholder = '-';
+            } else {
+                cell.classList.remove('is-closed');
+                timeInput.disabled = false;
+                timeInput.style.opacity = '1';
+                timeInput.placeholder = 'ระบุเวลา';
+
+                // หากยังไม่มีเวลา ให้ดึงจาก Preset
+                if (!timeInput.value.trim()) {
+                    const dateObj = new Date(currentYear, currentMonth, day);
+                    const preset = appPresets.find(p => p.id === dateObj.getDay());
+                    if (preset && preset.defaultTime) {
+                        timeInput.value = cleanTimeString(preset.defaultTime);
+                    }
+                }
+            }
+
+            saveMonthSpecificData();
+        }
+
+        // บันทึกสถานะและเวลาของเดือนปัจจุบันลงใน LocalStorage
+        function saveMonthSpecificData() {
+            const year = currentYear;
+            const month = currentMonth;
+            const data = {};
+
+            const cells = document.querySelectorAll('#calendarGrid .day-cell:not(.empty)');
+            cells.forEach(cell => {
+                const day = cell.dataset.day;
+                const status = cell.querySelector('.status-badge-select').value;
+                const time = cleanTimeString(cell.querySelector('.time-input-field').value);
+
+                data[day] = { status, time };
+            });
+
+            data.announcement = document.getElementById('footerAnnouncement').value;
+            localStorage.setItem(getMonthStorageKey(year, month), JSON.stringify(data));
+        }
+
+        // ----------------------------------------------------
+        // Auto-fill & Quick Reset Actions
+        // ----------------------------------------------------
+        function applyDefaultPresetsToAllDays() {
+            const cells = document.querySelectorAll('#calendarGrid .day-cell:not(.empty)');
+            cells.forEach(cell => {
+                const day = parseInt(cell.dataset.day);
+                const dateObj = new Date(currentYear, currentMonth, day);
+                const dayOfWeek = dateObj.getDay();
+                const preset = appPresets.find(p => p.id === dayOfWeek) || { defaultStatus: 'open', defaultTime: '' };
+
+                const selectEl = cell.querySelector('.status-badge-select');
+                const timeInput = cell.querySelector('.time-input-field');
+
+                selectEl.value = preset.defaultStatus;
+                selectEl.className = `status-badge-select status-${preset.defaultStatus}`;
+
+                if (preset.defaultStatus === 'closed') {
+                    cell.classList.add('is-closed');
+                    timeInput.disabled = true;
+                    timeInput.style.opacity = '0.35';
+                    timeInput.value = '';
+                    timeInput.placeholder = '-';
+                } else {
+                    cell.classList.remove('is-closed');
+                    timeInput.disabled = false;
+                    timeInput.style.opacity = '1';
+                    timeInput.placeholder = 'ระบุเวลา';
+                    timeInput.value = cleanTimeString(preset.defaultTime) || '';
+                }
+            });
+
+            saveMonthSpecificData();
+        }
+
+        function resetCurrentMonthSchedule() {
+            const confirmReset = confirm('⚠️ คุณต้องการล้างข้อมูลปฏิทินของเดือนนี้ทั้งหมดใช่หรือไม่?\n\n(การกระทำนี้จะล้างเวลาและสถานะที่ระบุไว้ในเดือนปัจจุบัน)');
+            if (confirmReset) {
+                localStorage.removeItem(getMonthStorageKey(currentYear, currentMonth));
+                generateCalendarGrid();
+                alert('ล้างข้อมูลปฏิทินประจำเดือนนี้เรียบร้อยแล้ว');
+            }
+        }
+
+        // ----------------------------------------------------
+        // Modals & Settings Management
+        // ----------------------------------------------------
+        function openSettingsModal() {
+            document.getElementById('settingClinicName').value = document.getElementById('displayClinicName').innerText.trim();
+            document.getElementById('settingClinicSubtitle').value = document.getElementById('displayClinicSubtitle').innerText.trim();
+            document.getElementById('settingsModal').classList.add('active');
+        }
+
+        function closeSettingsModal() {
+            document.getElementById('settingsModal').classList.remove('active');
+        }
+
+        function applyAndSaveSettingsModal() {
+            const name = document.getElementById('settingClinicName').value.trim();
+            const sub = document.getElementById('settingClinicSubtitle').value.trim();
+            
+            if (name) document.getElementById('displayClinicName').innerText = name;
+            if (sub) document.getElementById('displayClinicSubtitle').innerText = sub;
+
+            saveClinicProfile();
+            closeSettingsModal();
+        }
+
+        function renderThemeSwatches() {
+            const container = document.getElementById('themeSwatchesContainer');
+            container.innerHTML = '';
+            colorThemes.forEach(th => {
+                const swatch = document.createElement('div');
+                swatch.className = `theme-swatch ${th.id === selectedThemeId ? 'active' : ''}`;
+                swatch.style.backgroundColor = th.swatchColor;
+                swatch.dataset.themeId = th.id;
+                swatch.title = th.name;
+                swatch.onclick = () => applyTheme(th.id);
+                container.appendChild(swatch);
+            });
+        }
+
+        // Preset Modal
+        function openPresetModal() {
+            renderPresetDaysInputs();
+            document.getElementById('presetModal').classList.add('active');
+        }
+
+        function closePresetModal() {
+            document.getElementById('presetModal').classList.remove('active');
+        }
+
+        function renderPresetDaysInputs() {
+            const container = document.getElementById('presetDaysList');
+            container.innerHTML = '';
+
+            appPresets.forEach((p, idx) => {
+                const row = document.createElement('div');
+                row.className = 'preset-day-row';
+                row.innerHTML = `
+                    <span style="font-weight: 600; font-size: 14px;">${p.name}</span>
+                    <select class="form-select" id="preset_status_${p.id}">
+                        <option value="open" ${p.defaultStatus === 'open' ? 'selected' : ''}>เปิด</option>
+                        <option value="closed" ${p.defaultStatus === 'closed' ? 'selected' : ''}>ปิด</option>
+                    </select>
+                    <input type="text" class="form-input" list="commonTimePresets" id="preset_time_${p.id}" 
+                           value="${cleanTimeString(p.defaultTime) || ''}" placeholder="17.00 - 19.00 หรือ 09.00 - 12.00">
+                `;
+                container.appendChild(row);
+            });
+        }
+
+        function savePresetsAndApply() {
+            appPresets.forEach(p => {
+                const statusEl = document.getElementById(`preset_status_${p.id}`);
+                const timeEl = document.getElementById(`preset_time_${p.id}`);
+                if (statusEl) p.defaultStatus = statusEl.value;
+                if (timeEl) p.defaultTime = cleanTimeString(timeEl.value);
+            });
+
+            localStorage.setItem('clinic_schedule_presets', JSON.stringify(appPresets));
+            closePresetModal();
+            applyDefaultPresetsToAllDays();
+        }
+
+        function resetPresetsToFactory() {
+            if (confirm('ต้องการรีเซ็ตเวลาเริ่มต้นกลับเป็นค่าโรงงานใช่หรือไม่?')) {
+                appPresets = JSON.parse(JSON.stringify(daysOfWeekList));
+                localStorage.setItem('clinic_schedule_presets', JSON.stringify(appPresets));
+                renderPresetDaysInputs();
+            }
+        }
+
+        // ----------------------------------------------------
+        // Image Upload Handlers (Base64 LocalStorage)
+        // ----------------------------------------------------
+        function handleImageUpload(event, type) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const base64Data = e.target.result;
+                if (type === 'logo') {
+                    document.getElementById('displayLogo').src = base64Data;
+                    localStorage.setItem('clinic_img_logo', base64Data);
+                } else if (type === 'qrFb') {
+                    document.getElementById('displayQrFb').src = base64Data;
+                    localStorage.setItem('clinic_img_qrFb', base64Data);
+                } else if (type === 'qrLine') {
+                    document.getElementById('displayQrLine').src = base64Data;
+                    localStorage.setItem('clinic_img_qrLine', base64Data);
+                }
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function resetImagesToDefault() {
+            if (confirm('คุณต้องการรีเซ็ตรูปภาพทั้งหมดกลับเป็นไฟล์ดั้งเดิมใช่หรือไม่?')) {
+                localStorage.removeItem('clinic_img_logo');
+                localStorage.removeItem('clinic_img_qrFb');
+                localStorage.removeItem('clinic_img_qrLine');
+
+                document.getElementById('displayLogo').src = 'logo.jpg';
+                document.getElementById('displayQrFb').src = 'Facebook.jpg';
+                document.getElementById('displayQrLine').src = 'LINE.jpg';
+                closeSettingsModal();
+            }
+        }
+
+        // ----------------------------------------------------
+        // Export & Import JSON (Backup & Restore)
+        // ----------------------------------------------------
+        function exportDataAsJSON() {
+            const backupData = {
+                appName: "Clinic Calendar Maker Pro",
+                version: "2.0",
+                exportDate: new Date().toISOString(),
+                profile: localStorage.getItem('clinic_profile') ? JSON.parse(localStorage.getItem('clinic_profile')) : null,
+                themeId: localStorage.getItem('clinic_theme_id') || selectedThemeId,
+                presets: localStorage.getItem('clinic_schedule_presets') ? JSON.parse(localStorage.getItem('clinic_schedule_presets')) : appPresets,
+                showFooter: localStorage.getItem('clinic_show_footer') || 'true',
+                images: {
+                    logo: localStorage.getItem('clinic_img_logo') || null,
+                    qrFb: localStorage.getItem('clinic_img_qrFb') || null,
+                    qrLine: localStorage.getItem('clinic_img_qrLine') || null
+                },
+                monthlySchedules: {}
+            };
+
+            // ดึงข้อมูลตารางเวลาทุกเดือนที่บันทึกไว้ใน LocalStorage
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                if (key && key.startsWith('clinic_cal_data_')) {
+                    try {
+                        backupData.monthlySchedules[key] = JSON.parse(localStorage.getItem(key));
+                    } catch(e) {}
+                }
+            }
+
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(backupData, null, 2));
+            const downloadAnchor = document.createElement('a');
+            downloadAnchor.setAttribute("href", dataStr);
+            const dateStr = new Date().toISOString().slice(0, 10);
+            downloadAnchor.setAttribute("download", `clinic_calendar_backup_${dateStr}.json`);
+            document.body.appendChild(downloadAnchor);
+            downloadAnchor.click();
+            downloadAnchor.remove();
+        }
+
+        function importDataFromJSON(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    if (!data) throw new Error('ไฟล์ข้อมูลไม่ถูกต้อง');
+
+                    if (confirm('คุณต้องการนำเข้าข้อมูลจากไฟล์ JSON นี้ใช่หรือไม่?\n\n(ข้อมูลและการตั้งค่าปัจจุบันจะถูกอัปเดตตามไฟล์ที่นำเข้า)')) {
+                        if (data.profile) localStorage.setItem('clinic_profile', JSON.stringify(data.profile));
+                        if (data.themeId) localStorage.setItem('clinic_theme_id', data.themeId);
+                        if (data.presets) localStorage.setItem('clinic_schedule_presets', JSON.stringify(data.presets));
+                        if (data.showFooter !== undefined) localStorage.setItem('clinic_show_footer', data.showFooter);
+
+                        if (data.images) {
+                            if (data.images.logo) localStorage.setItem('clinic_img_logo', data.images.logo);
+                            if (data.images.qrFb) localStorage.setItem('clinic_img_qrFb', data.images.qrFb);
+                            if (data.images.qrLine) localStorage.setItem('clinic_img_qrLine', data.images.qrLine);
+                        }
+
+                        if (data.monthlySchedules) {
+                            Object.keys(data.monthlySchedules).forEach(k => {
+                                localStorage.setItem(k, JSON.stringify(data.monthlySchedules[k]));
+                            });
+                        }
+
+                        alert('✅ นำเข้าข้อมูลสำเร็จเรียบร้อยแล้ว! กำลังรีเฟรชหน้าจอ...');
+                        window.location.reload();
+                    }
+                } catch(err) {
+                    alert('❌ เกิดข้อผิดพลาดในการนำเข้าไฟล์ JSON: ' + err.message);
+                }
+            };
+            reader.readAsText(file);
+            event.target.value = '';
+        }
+
+        // ----------------------------------------------------
+        // Export Image Engine (html2canvas High Resolution)
+        // ----------------------------------------------------
+        function exportAsImage(format = 'png') {
+            const target = document.getElementById('calendarPrintArea');
+            const isFooterFaded = document.getElementById('calendarFooter').classList.contains('is-faded');
+            
+            // แสดงสถานะกำลังบันทึก
+            const origCursor = document.body.style.cursor;
+            document.body.style.cursor = 'wait';
+
+            html2canvas(target, {
+                scale: 2.5, // ความละเอียดสูง คมชัดมาก
+                useCORS: true,
+                allowTaint: true,
+                backgroundColor: '#ffffff',
+                logging: false,
+                onclone: (clonedDoc) => {
+                    const clonedTarget = clonedDoc.getElementById('calendarPrintArea');
+                    if (clonedTarget) {
+                        clonedTarget.style.height = 'auto';
+                        clonedTarget.style.minHeight = '209mm';
+                        clonedTarget.style.overflow = 'visible';
+                        clonedTarget.style.padding = '5mm 10mm 5mm 10mm';
+                    }
+
+                    // ซ่อนองค์ประกอบ UI สำหรับควบคุม (เช่น checkbox บนหน้าจอ)
+                    clonedDoc.querySelectorAll('.no-print').forEach(el => {
+                        el.style.display = 'none';
+                    });
+
+                    // จัดการแถบข้อความประกาศท้ายตาราง
+                    const clonedFooter = clonedDoc.getElementById('calendarFooter');
+                    if (isFooterFaded) {
+                        if (clonedFooter) clonedFooter.style.display = 'none';
+                    } else if (clonedFooter) {
+                        clonedFooter.style.display = 'flex';
+                        clonedFooter.style.padding = '4px 10px';
+                        clonedFooter.style.marginTop = '4px';
+                        
+                        const footInput = clonedFooter.querySelector('#footerAnnouncement');
+                        const footText = footInput ? footInput.value.trim() : '';
+                        clonedFooter.innerHTML = `
+                            <span style="font-size: 13px; font-weight: 700; color: var(--primary-color);">📢</span>
+                            <span style="font-size: 13px; color: #334155; font-weight: 500; flex: 1;">${footText || 'ประกาศจากทางคลินิก'}</span>
+                        `;
+                    }
+
+                    // ปรับแต่ง cloned inputs และ selects อื่นๆ ให้สวยงามเหมือนพิมพ์
+                    const inputs = clonedDoc.querySelectorAll('input, select');
+                    inputs.forEach(inp => {
+                        inp.style.border = 'none';
+                        inp.style.boxShadow = 'none';
+                    });
+                }
+            }).then(canvas => {
+                document.body.style.cursor = origCursor;
+                const link = document.createElement('a');
+                const monthName = monthsThai[currentMonth];
+                const yearTh = currentYear + 543;
+                link.download = `ตารางเวลา_${monthName}_${yearTh}.${format}`;
+                link.href = canvas.toDataURL(`image/${format === 'png' ? 'png' : 'jpeg'}`, 0.95);
+                link.click();
+            }).catch(err => {
+                document.body.style.cursor = origCursor;
+                alert('เกิดข้อผิดพลาดในการบันทึกรูปภาพ: ' + err.message);
+            });
+        }
+    </script>
 </body>
 </html>
